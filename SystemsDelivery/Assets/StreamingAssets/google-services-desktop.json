@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1082743387918",
+    "firebase_url": "https://systemsdelivery-1d3-default-rtdb.firebaseio.com",
+    "project_id": "systemsdelivery-1d3",
+    "storage_bucket": "systemsdelivery-1d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1082743387918:android:39496fbfedb07684c7895f",
+        "android_client_info": {
+          "package_name": "com.Dan.SystemsDelivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPviZMYrV97HxSCQS3Xmm7yyjiVNYpQqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
