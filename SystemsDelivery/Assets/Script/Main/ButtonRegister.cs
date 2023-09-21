@@ -14,6 +14,9 @@ public class ButtonRegister : MonoBehaviour
     private Button _registrationButton;
     private Coroutine _registrationCorutine;
 
+    public GameObject main;
+    public GameObject register;
+
     private DatabaseReference mDatabaseRef;
 
     void Reset()
@@ -25,6 +28,7 @@ public class ButtonRegister : MonoBehaviour
         _registrationButton.onClick.AddListener(HandleRegisterButtonClicked);
         mDatabaseRef = FirebaseDatabase.DefaultInstance.RootReference;
     }
+    
     void HandleRegisterButtonClicked()
     {
         string email = GameObject.Find("InputEmail").GetComponent<TMP_InputField>().text;
@@ -57,7 +61,15 @@ public class ButtonRegister : MonoBehaviour
                 result.User.DisplayName, result.User.UserId);
 
             string name = GameObject.Find("InputUsername").GetComponent<TMP_InputField>().text;
-            mDatabaseRef.Child("users").Child(result.User.UserId).Child("username").SetValueAsync(name);
+            mDatabaseRef.Child("Users").Child(result.User.UserId).Child("Username").SetValueAsync(name);
+            mDatabaseRef.Child("Users").Child(result.User.UserId).Child("Score").SetValueAsync(0);
+
+            HideRegisters();
         }
+    }
+    private void HideRegisters()
+    {
+        register.SetActive(false);
+        main.SetActive(true);
     }
 }

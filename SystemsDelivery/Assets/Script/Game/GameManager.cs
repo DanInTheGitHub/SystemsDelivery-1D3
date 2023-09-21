@@ -1,8 +1,12 @@
+using Firebase.Auth;
+using Firebase.Database;
+using Firebase.Extensions;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using Firebase.Database;
 
 public class GameManager : MonoBehaviour
 {
@@ -21,23 +25,58 @@ public class GameManager : MonoBehaviour
 
     public TextMeshProUGUI resultText;
     public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI scoreText2;
 
     private int playerScore = 0;
     private int cpuScore = 0;
 
     private int round = 0;
 
-    private int score = 0;
+    DatabaseReference mDatabase;
+    string UserId;
+    private int score;
 
     private bool gameInProgress = true;
+    [SerializeField] GameObject exitbutton;
 
     private void Start()
     {
+        mDatabase = FirebaseDatabase.DefaultInstance.RootReference;
+        UserId = FirebaseAuth.DefaultInstance.CurrentUser.UserId;
+        GetUserScore();
+
+        exitbutton.SetActive(true);
+
         availableCpuChoices.AddRange(new List<Choice> { Choice.Rock, Choice.Paper, Choice.Scissors });
 
         rockButton.onClick.AddListener(() => MakePlayerChoice(Choice.Rock));
         paperButton.onClick.AddListener(() => MakePlayerChoice(Choice.Paper));
         scissorsButton.onClick.AddListener(() => MakePlayerChoice(Choice.Scissors));
+    }
+
+    public void GetUserScore()
+    {
+        FirebaseDatabase.DefaultInstance
+            .GetReference("Users/" + UserId + "/Score")
+            .GetValueAsync().ContinueWithOnMainThread(task => {
+                if (task.IsFaulted)
+                {
+                    Debug.Log(task.Exception);
+                }
+                else if (task.IsCompleted)
+                {
+                    DataSnapshot snapshot = task.Result;
+                    string _score = "" + snapshot.Value;
+                    score = int.Parse(_score);
+
+                    setLabel();
+                }
+            });
+    }
+
+    private void setLabel()
+    {
+        scoreText2.text = "Score: " + score;
     }
 
     private void MakePlayerChoice(Choice playerChoice)
@@ -52,13 +91,11 @@ public class GameManager : MonoBehaviour
             Choice cpuChoice = availableCpuChoices[Random.Range(0, availableCpuChoices.Count)];
           
             DisablePlayerChoiceButton(playerChoice);
-            // Disable the CPU's choice
             DisableCpuChoiceButton(cpuChoice);
 
             // Compare playerChoice and cpuChoice to determine the result
             Result gameResult = DetermineResult(playerChoice, cpuChoice);
 
-            // Update the UI
             resultText.text = gameResult.ToString();
             UpdateScore(gameResult);
 
@@ -67,10 +104,13 @@ public class GameManager : MonoBehaviour
             previousCpuChoice = cpuChoice;
             if (round == 3)
             {
-                // Allow the player to restart the game
                 StartCoroutine(RestartGame());
 
                 round = 0;
+            }
+            if (round != 0)
+            {
+                exitbutton.SetActive(false);
             }
             
         }
@@ -78,9 +118,6 @@ public class GameManager : MonoBehaviour
 
     private Result DetermineResult(Choice player, Choice cpu)
     {
-        // Implement your logic to determine the game result here
-        // You can use enums for Choice and Result to make the code more readable
-        // For example:
         if (player == cpu) return Result.Draw;
         if ((player == Choice.Rock && cpu == Choice.Scissors) ||
             (player == Choice.Paper && cpu == Choice.Rock) ||
@@ -93,7 +130,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateScore(Result result)
     {
-        // Update the player and CPU scores based on the result
         if (result == Result.Win)
         {
             playerScore++;
@@ -102,19 +138,21 @@ public class GameManager : MonoBehaviour
         {
             cpuScore++;
         }
-
-        // Update the score display
         scoreText.text = "Player: " + playerScore + " CPU: " + cpuScore;
     }
 
     private IEnumerator RestartGame()
     {
         gameInProgress = false;
-        yield return new WaitForSeconds(2f); // Wait for 2 seconds before allowing a new game
+        yield return new WaitForSeconds(2f);
         resultText.text = "Choose an option:";
 
         availableCpuChoices.Clear();
         availableCpuChoices.AddRange(initialCpuChoices);
+
+        ChangeScore();
+        SetNewScore();
+        ResetScoreOfMach();
 
         EnableAllButtons();
         EnableAllCpuChoiceButtons();
@@ -122,6 +160,71 @@ public class GameManager : MonoBehaviour
         previousCpuChoice = Choice.None;
 
         gameInProgress = true;
+        exitbutton.SetActive(true);
+    }
+
+    private void ResetScoreOfMach()
+    {
+        playerScore = 0;
+        cpuScore = 0;
+    }
+
+    private void SetNewScore()
+    {
+        scoreText2.text = ("Score: "+ score);
+        mDatabase.Child("Users").Child(UserId).Child("Score").SetValueAsync(score);
+    }
+
+    private void ChangeScore()
+    {
+        if (playerScore == 3 && cpuScore == 0)
+        {
+            score += 4;
+        }
+        else if (playerScore == 2 && cpuScore == 1)
+        {
+            score += 3;
+        }
+        else if (playerScore == 2 && cpuScore == 0)
+        {
+            score += 2;
+        }
+        else if (playerScore == cpuScore)
+        {
+            score += 1;
+        }
+        else if (playerScore == 0 && cpuScore == 2)
+        {
+            score -= 2;
+        }
+        else if (playerScore == 1 && cpuScore == 2)
+        {
+            score -= 3;
+        }
+        else if (playerScore == 0 && cpuScore == 3)
+        {
+            score -= 4;
+        }
+    }
+
+    public void GetUsersHighestScores()
+    {
+        FirebaseDatabase.DefaultInstance.GetReference("Users").OrderByChild("Score").LimitToLast(5).GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.Log(task.Exception);
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                foreach (var userDoc in (Dictionary<string, object>)snapshot.Value)
+                {
+                    var userObject = (Dictionary<string, object>)userDoc.Value;
+                    Debug.Log(userObject["Username"] + " : " + userObject["Score"]);
+                }
+            }
+        });
     }
 
     private void DisableAllButtons()

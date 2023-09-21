@@ -35,7 +35,7 @@ public class UsernameView : MonoBehaviour
     private void SetLableUsername(string userId)
     {
         FirebaseDatabase.DefaultInstance
-            .GetReference("users/"+userId+"/username")
+            .GetReference("Users/"+userId+"/Username")
             .GetValueAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.IsFaulted)

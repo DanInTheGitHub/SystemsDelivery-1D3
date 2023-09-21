@@ -1,50 +1,56 @@
 using Firebase.Auth;
 using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using TMPro;
 using UnityEngine.UI;
-using Firebase.Auth;
+using Firebase.Database;
+using Firebase.Extensions;
 
 public class ButtonLogin : MonoBehaviour
 {
-    [SerializeField]
-    private Button _loginButton;
+    [SerializeField] private Button _loginButton;
+    [SerializeField] private TMP_InputField _emailInputField;
+    [SerializeField] private TMP_InputField _emailPasswordField;
+    [SerializeField] private string _sceneToLoad = "Intermediate";
 
-    [SerializeField]
-    private TMP_InputField _emailInputField;
-    [SerializeField]
-    private TMP_InputField _emailPasswordField;
+    public bool open;
 
-    void Reset()
-    {
-        _loginButton = GetComponent<Button>();
-        _emailInputField = GameObject.Find("InputEmail").GetComponent<TMP_InputField>();
-        _emailPasswordField = GameObject.Find("InputPassword").GetComponent<TMP_InputField>();
-    }
+    private FirebaseAuth _auth;
+
     void Start()
     {
         _loginButton.onClick.AddListener(HandleLoginButtonClicked);
+        _auth = FirebaseAuth.DefaultInstance;
+        open = false;
+    }
+    private void FixedUpdate()
+    {
+        if (open == true)
+        {
+            LoadScene();
+        }
     }
 
     private void HandleLoginButtonClicked()
     {
-        var auth = FirebaseAuth.DefaultInstance;
-        auth.SignInWithEmailAndPasswordAsync(_emailInputField.text, _emailPasswordField.text).ContinueWith(task => {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("SignInWithEmailAndPasswordAsync was canceled.");
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError("SignInWithEmailAndPasswordAsync encountered an error: " + task.Exception.Message);
-                return;
-            }
-
-            Firebase.Auth.AuthResult result = task.Result;
-            Debug.LogFormat("User signed in successfully: {0} ({1})",
-                result.User.DisplayName, result.User.UserId);
-        });
+        _auth.SignInWithEmailAndPasswordAsync(_emailInputField.text, _emailPasswordField.text)
+            .ContinueWith(task => {
+                if (task.IsCanceled || task.IsFaulted)
+                {
+                    Debug.LogError("SignInWithEmailAndPasswordAsync encountered an error: " + task.Exception);
+                    return;
+                }
+                else
+                {
+                    Debug.Log("User signed in successfully: " + _auth.CurrentUser.DisplayName);
+                    open = true;
+                }
+            });
+    }
+    public void LoadScene()
+    {
+        SceneManager.LoadScene(_sceneToLoad);
+        Debug.Log("Algo Falla");
     }
 }
