@@ -179,31 +179,31 @@ public class GameManager : MonoBehaviour
     {
         if (playerScore == 3 && cpuScore == 0)
         {
-            score += 4;
+            score += 40;
         }
         else if (playerScore == 2 && cpuScore == 1)
         {
-            score += 3;
+            score += 30;
         }
         else if (playerScore == 2 && cpuScore == 0)
         {
-            score += 2;
+            score += 20;
         }
         else if (playerScore == cpuScore)
         {
-            score += 1;
+            score += 10;
         }
         else if (playerScore == 0 && cpuScore == 2)
         {
-            score -= 2;
+            score -= 20;
         }
         else if (playerScore == 1 && cpuScore == 2)
         {
-            score -= 3;
+            score -= 30;
         }
         else if (playerScore == 0 && cpuScore == 3)
         {
-            score -= 4;
+            score -= 40;
         }
     }
 
